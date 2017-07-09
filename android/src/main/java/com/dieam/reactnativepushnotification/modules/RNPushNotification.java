@@ -84,23 +84,31 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
 
     private void registerNotificationsReceiveNotificationActions(ReadableArray actions) {
         IntentFilter intentFilter = new IntentFilter();
+        final HashMap<String, ReadableMap> actionsByKey = new HashMap<>();
         // Add filter for each actions.
         for (int i = 0; i < actions.size(); i++) {
-            String action = actions.getString(i);
-            intentFilter.addAction(getReactApplicationContext().getPackageName() + "." + action);
+            ReadableMap action = actions.getMap(i);
+            String actionKey = action.getString("key");
+            intentFilter.addAction(getReactApplicationContext().getPackageName() + "." + actionKey);
+            actionsByKey.put(actionKey, action);
         }
         getReactApplicationContext().registerReceiver(new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 Bundle bundle = intent.getBundleExtra("notification");
+                String actionKey = bundle.getString("action");
+                ReadableMap action = actionsByKey.get(actionKey);
+                Boolean autoCancel = action.getBoolean("autoCancel");
 
                 // Notify the action.
                 mJsDelivery.notifyNotificationAction(bundle);
 
                 // Dismiss the notification popup.
-                NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-                int notificationID = Integer.parseInt(bundle.getString("id"));
-                manager.cancel(notificationID);
+                if (autoCancel) {
+                    NotificationManager manager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+                    int notificationID = Integer.parseInt(bundle.getString("id"));
+                    manager.cancel(notificationID);
+                }
             }
         }, intentFilter);
     }
