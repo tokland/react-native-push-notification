@@ -24,6 +24,7 @@ import android.util.Log;
 import com.facebook.react.bridge.ReadableMap;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.json.JSONException;
 
 import java.util.Arrays;
@@ -290,27 +291,29 @@ public class RNPushNotificationHelper {
             }
 
             if (actionsArray != null) {
-                // No icon for now. The icon value of 0 shows no icon.
-                int icon = 0;
-
                 // Add button for each actions.
                 for (int i = 0; i < actionsArray.length(); i++) {
-                    String action;
+                    JSONObject action;
+                    String actionKey;
+                    String actionIcon;
                     try {
-                        action = actionsArray.getString(i);
+                        action = actionsArray.getJSONObject(i);
+                        actionKey = action.getString("key");
+                        actionIcon = action.getString("icon");
                     } catch (JSONException e) {
                         Log.e(LOG_TAG, "Exception while getting action from actionsArray.", e);
                         continue;
                     }
 
                     Intent actionIntent = new Intent();
-                    actionIntent.setAction(context.getPackageName() + "." + action);
+                    actionIntent.setAction(context.getPackageName() + "." + actionKey);
                     // Add "action" for later identifying which button gets pressed.
-                    bundle.putString("action", action);
+                    bundle.putString("action", actionKey);
                     actionIntent.putExtra("notification", bundle);
                     PendingIntent pendingActionIntent = PendingIntent.getBroadcast(context, notificationID, actionIntent,
                             PendingIntent.FLAG_UPDATE_CURRENT);
-                    notification.addAction(icon, action, pendingActionIntent);
+                    int actionIconResId = res.getIdentifier(actionIcon, "mipmap", packageName);
+                    notification.addAction(actionIconResId, actionKey, pendingActionIntent);
                 }
             }
 
