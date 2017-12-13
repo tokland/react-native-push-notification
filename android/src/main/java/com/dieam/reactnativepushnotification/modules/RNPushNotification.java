@@ -44,7 +44,18 @@ public class RNPushNotification extends ReactContextBaseJavaModule implements Ac
         mJsDelivery = new RNPushNotificationJsDelivery(reactContext);
 
         registerNotificationsRegistration();
+
+        IntentFilter onCloseIntentFilter =
+                new IntentFilter(getReactApplicationContext().getPackageName() + ".RNPushNotificationOnClose");
+
+        getReactApplicationContext().registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mJsDelivery.notifyNotificationClosed();
+            }
+        }, onCloseIntentFilter);
     }
+
 
     @Override
     public String getName() {

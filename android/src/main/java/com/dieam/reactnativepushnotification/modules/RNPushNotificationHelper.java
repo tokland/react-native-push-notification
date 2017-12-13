@@ -6,8 +6,10 @@ import android.app.Application;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.res.Resources;
@@ -158,11 +160,19 @@ public class RNPushNotificationHelper {
                 title = context.getPackageManager().getApplicationLabel(appInfo).toString();
             }
 
+            int notificationID = Integer.parseInt(notificationIdString);
+
+            Intent onCloseIntent = new Intent();
+            onCloseIntent.setAction(context.getPackageName() + ".RNPushNotificationOnClose");
+            PendingIntent deleteIntent = PendingIntent.getBroadcast(context,
+                    notificationID, onCloseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
             NotificationCompat.Builder notification = new NotificationCompat.Builder(context)
                     .setContentTitle(title)
                     .setTicker(bundle.getString("ticker"))
                     .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setDeleteIntent(deleteIntent)
                     .setAutoCancel(bundle.getBoolean("autoCancel", true));
 
             String group = bundle.getString("group");
@@ -266,8 +276,6 @@ public class RNPushNotificationHelper {
                     notification.setColor(Color.parseColor(color));
                 }
             }
-
-            int notificationID = Integer.parseInt(notificationIdString);
 
             PendingIntent pendingIntent = PendingIntent.getActivity(context, notificationID, intent,
                     PendingIntent.FLAG_UPDATE_CURRENT);
